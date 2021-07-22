@@ -63,13 +63,14 @@
 <p class="abstractText">
 Existing research in cognitive science demonstrates the capabilities of infants for understanding the physical world and making predictions via unsupervised visual observation. By observing moving objects in the world, infants can acquire self-awareness and build internal physics models of the world. Such physical models help humans to acquire the ability to predict the outcome of physical events and control tools to interact with the environment. 
 </p>
+<img class="bannerImage" src="./images/motivation.png" ,="" width="400"><br>
 <p class="abstractText">
- See the example figure: A player is showing the man how to play a video game. To learn the game, human should build an internal predictive model of the game, to know how to control the agent and how the actions taken affect the game state. However, human do not need to focus on the player’s actions on the keyboard all the time. Most of the time, human just watches the video in the screen, observes the interactions in the game. The model of the game is built mostly upon the visual observations. To know how to control the agent, a few additional observations on the keyboard are enough.
+ See the example figure above: A player is showing the man how to play a video game. To learn the game, human should build an internal predictive model of the game, to know how to control the agent and how the actions taken affect the game state. However, human do not need to focus on the player’s actions on the keyboard all the time. Most of the time, human just watches the video in the screen, observes the interactions in the game. The model of the game is built mostly upon the visual observations. To know how to control the agent, a few additional observations on the keyboard are enough.
 </p>
 <p class="abstractText">
  This example inspires us to learn unsupervised world models from videos. Note that, common approaches learning world models usually need a large amount of labelled videos in the environment, for supervised training. We propose DMotion, an unsupervised learning method, which is less data demanding, more intuitive and human-like. As shown in the figure below, in a world with several rigid bodies, DMotion first disentangles the agent object and learns objects’ interactions from unlabeled videos. Then, using a few samples labelled with agent’s actions, DMotion understands how each action affects the agent’s motion.
 </p>
-
+<img class="bannerImage" src="./images/motivation2.png" ,="" width="800"><br>
 <!--
   <img class="bannerImage" src="./images/teaser.png" ,="" width="800"><br>
   <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
@@ -79,40 +80,63 @@ Existing research in cognitive science demonstrates the capabilities of infants 
 -->
 
 <div class="abstractTitle">
-    Tasks
+    Problem Formulation
 </div>
-  <img class="bannerImage" src="./images/teaser.png" ,="" width="800"><br>
-  <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
-              Figure 1.
-      Given an input 3D articulated object (a), we propose a novel perception-interaction handshaking point for robotic manipulation tasks - object-centric actionable visual priors, including per-point visual action affordance predictions (b) indicating where to interact, and diverse trajectory proposals (c) for selected contact points (marked with green dots) suggesting how to interact.
-  </p></td></tr></tbody></table>
+<p class="abstractText">
+The environment for robotic/object manipulation can usually be considered as a Markov decision process, with a deterministic transition function (Newton's law).
+The observations are RGB images. We aim to build a forward model, that predicts the next observation given the observation history and the current action. The learned forward model is then used for model-predictive control, which selects actions to reach some goal in the environment.  
+</p>
+<p class="abstractText">
+The training dataset contains videos only, no additional annotations are provided. In this paper, an unsupervised learning method is proposed with spatial transformers to disentangle the motion of the agent and model the interactions between the agent and other objects, and further applied in visuomotor robotic control tasks. 
+</p>
+<p class="abstractText">
+  Refer to <a href="https://arxiv.org/abs/2103.04301" target="_blank">section III.A</a> for more detailed mathematical definition.
+</p>
 
 <div class="abstractTitle">
     Framework and Network Architecture
 </div>
-  <img class="bannerImage" src="./images/fig2.png" ,="" width="800"><br>
+  <img class="bannerImage" src="./images/framework.png" ,="" width="800"><br>
+  <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
+              Figure 1.
+      A schematic overview of our framework. As indicated by the blue bold arrows in the left part, we first learn the forward model using a collected unlabelled video dataset and a few demonstrations labelled with actions. In the right part with black arrows, combined with a planning algorithm, we use the learned forward model for model predictive control (MPC). The planning algorithm generates action sequences, queries the forward model for imagined future observations, and selects the best action to reach the target in the environment.
+  </p></td></tr></tbody></table>
+
+  <img class="bannerImage" src="./images/model.png" ,="" width="800"><br>
   <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
               Figure 2.
-      Our proposed VAT-MART framework is composed of an RL policy (left) exploring interaction trajectories and a perception system (right) learning the desired actionable visual priors. We build bidirectional supervisory channels between the two parts: 1) the RL policy collects data to supervise the perception system, and 2) the perception system produces curiosity feedbacks encouraging the RL networks to explore diverse solutions.
+      The training process of DMotion. The model has two modules: an object extractor and an interaction learner. The object extractor consists of a motion encoder, an image encoder and an image decoder. By modelling the motion of different feature maps, the object extractor disentangles different objects in images.
+    The interaction learner, indicated by the grey background, predicts the future frame conditioned on the last two frames and a feature map m<sup>0</sup><sub>t+1</sub>. By training two modules together, we force the feature map m<sup>0</sup> and the transformation matrix phi<sup>0</sup> to contain the spatial and motion information of the agent, respectively.
   </p></td></tr></tbody></table>
 
 <div class="abstractTitle">
     Qualitative Results
 </div>
-  <img class="bannerImage" src="./images/fig3.png" ,="" width="800"><br>
+  <img class="bannerImage" src="./images/3.png" ,="" width="800"><br>
   <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
               Figure 3.
-      We show qualitative results of the actionability prediction and trajectory proposal modules. In each result block, from left to right, we present the input shape with the task, the predicted actionability heatmap, and three example trajectory proposals at a selected contact point.
+      Example results of visual forecasting conditioned on the agent's motion. First and second rows are the environments of Grid World and Robot Pushing, respectively. 
+    Each row is a sample trajectory generated by our model recursively, conditioned on the agent's motion. The rightmost image in each row shows the ground truth of the last frame produced by the environment.
   </p></td></tr></tbody></table>
-  <img class="bannerImage" src="./images/fig4.png" ,="" width="800"><br>
+  <img class="bannerImage" src="./images/4.png" ,="" width="800"><br>
   <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
               Figure 4.
-      We present qualitative analysis of the learned trajectory scoring module. In each result block, from left to right, we show the input shape with the task, the input trajectory with its close-up view, and our network predictions of success likelihood applying the trajectory over all the points.
+      Given figures of initial states (the blue boxes) and goal states (the red boxes), we visualise the states achieved by DMotion at different steps.
   </p></td></tr></tbody></table>
-  <img class="bannerImage" src="./images/fig5.png" ,="" width="800"><br>
+  <img class="bannerImage" src="./images/5.png" ,="" width="600"><br>
   <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
               Figure 5.
-      Left: qualitative analysis of the trajectory scoring prediction (each column shares the same task; every row uses the same trajectory); Middle: promising results testing on real-world data (from left to right: input, affordance prediction, trajectory proposals); Right: real-robot experiment.
+      Results of visuomotor control for Robot Pushing object manipulation task. The horizontal axis is the time step. The vertical axis is the average normalised distance between current and desired object locations, with the shaded regions indicating the standard deviations. Dotted lines show results from baselines trained with 10\% of labelled data.
+  </p></td></tr></tbody></table>
+  <img class="bannerImage" src="./images/6.png" ,="" width="600"><br>
+  <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
+              Figure 6.
+      Visualisation of long-term forecasting in the Robot Pushing environment. Action labels are provided at each time-step and we recursively generate the next time-step. Notice how the baselines fail to pinpoint and disentangle the exact location of the agent after a few time-steps.
+  </p></td></tr></tbody></table>
+  <img class="bannerImage" src="./images/7.png" ,="" width="500"><br>
+  <table width="800" align="center"><tbody><tr><td><p class="figureTitleText">
+              Figure 7.
+      Visualisation of the environment and the corresponding feature map containing the agent in the image encoder.
   </p></td></tr></tbody></table>
 
 
@@ -120,8 +144,8 @@ Existing research in cognitive science demonstrates the capabilities of infants 
   Acknowledgements
   </div>
   <p class="abstractText">
-This work was supported by the funding of National Natural Science Foundation of China —Youth Science Fund (No.62006006), a grant from the Toyota Research Institute University 2.0 program, NSF grant IIS-1763268, and a Vannevar Bush faculty fellowship.
-We would like to thank <a href="https://blog.csdn.net/tritone" target="_blank">Yourong Zhang</a> for setting up ROS environment and helping in real robot experiments.
+This project was supported by National Natural Science Foundation of China —Youth Science Fund (No.62006006): Learning Visual Prediction of Interactive Physical Scenes using Unlabelled Videos. 
+We would also like to thanks the funding from Key-Area Research and Development Program of Guangdong Province (No.2019B121204008) and National Key R\&D Program of China: New Generation Artificial Intelligence Open Source Community and Evaluation (No.2020AAA0103500), Topic: New Generation Artificial Intelligence Open Source Community Software and Hardware Infrastructure Support Platform (No.2020AAA0103501).
 </p>
 
 <p></p>
